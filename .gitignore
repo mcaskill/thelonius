@@ -1,0 +1,17 @@
+## Logging
+
+logs
+*.log
+error_log
+
+## Package Managers
+
+composer.lock
+composer.phar
+node_modules/
+bower_components/
+vendor/
+
+## Thelonius
+
+.env
