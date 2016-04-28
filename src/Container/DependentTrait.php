@@ -14,7 +14,6 @@
 namespace Thelonius\Container;
 
 use Interop\Container\ContainerInterface;
-use Pimple\Container;
 
 /**
  * An implementation, as Trait, of the `DependentInterface`.
@@ -25,13 +24,13 @@ use Pimple\Container;
 trait DependentTrait
 {
     /**
-     * Inject dependencies from a Pimple Container.
+     * Inject dependencies from a DI Container.
      *
-     * @param Container  $container  A dependencies container instance.
+     * @param ContainerInterface  $container  A dependencies container instance.
      *
      * @return self
      */
-    public function setDependencies(Container $container)
+    public function setDependencies(ContainerInterface $container)
     {
         if (is_callable('parent::setDependencies')) {
             parent::setDependencies($container);
@@ -43,13 +42,13 @@ trait DependentTrait
     }
 
     /**
-     * Inject peer dependencies from a Pimple Container for traits.
+     * Inject peer dependencies from a DI Container for traits.
      *
-     * @param Container  $container  A dependencies container instance.
+     * @param ContainerInterface  $container  A dependencies container instance.
      *
      * @return self
      */
-    public function setPeerDependencies(Container $container)
+    public function setPeerDependencies(ContainerInterface $container)
     {
         $class    = get_called_class();
         $excluded = $this->excludedPeerDependencies();

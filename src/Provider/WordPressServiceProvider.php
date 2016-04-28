@@ -11,20 +11,22 @@
  * @license   https://github.com/mcaskill/thelonius/blob/master/LICENSE (MIT License)
  */
 
-namespace Thelonius\Container;
+namespace Thelonius\Provider;
 
-use Interop\Container\ContainerInterface;
+use Pimple\Container;
+use Pimple\ServiceProviderInterface;
 
 /**
- * Defines an object with dependencies from a DI container.
+ * WordPress Service Provider.
  */
-interface DependentInterface
+class WordPressServiceProvider implements ServiceProviderInterface
 {
     /**
-     * Inject dependencies from a DI Container.
+     * Register Thelonius' default services.
      *
-     * @param  ContainerInterface  $container  A dependencies container instance.
-     * @return self
+     * @param Container $container A DI container implementing ArrayAccess and container-interop.
      */
-    public function setDependencies(ContainerInterface $container);
+    public function register(Container $container)
+    {
+    }
 }
