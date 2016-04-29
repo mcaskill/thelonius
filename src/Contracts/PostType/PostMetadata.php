@@ -11,7 +11,7 @@
  * @license   https://github.com/mcaskill/thelonius/blob/master/LICENSE (MIT License)
  */
 
-namespace Thelonius\PostType;
+namespace Thelonius\Contracts\PostType;
 
 /**
  * Defines a model that can use WordPress post metadata.

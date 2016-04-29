@@ -36,9 +36,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Thelonius\\": "src/",
-      "WordPress\\": "",
-      "WP\\": ""
+      "Thelonius\\": "src/"
     },
     "files": [
       "src/helpers.php"

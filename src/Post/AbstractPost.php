@@ -11,10 +11,9 @@
  * @license   https://github.com/mcaskill/thelonius/blob/master/LICENSE (MIT License)
  */
 
-namespace Thelonius\PostType;
+namespace Thelonius\Post;
 
 use JsonSerializable;
-use Fleshgrinder\Core\Stringable;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Contracts\Support\Arrayable;
 
@@ -45,7 +44,7 @@ abstract class AbstractPost implements
      *
      * @return array|string|PostTypeModel|PostTypeConfig
      */
-    public function getPostTypeConfig()
+    public static function getPostTypeConfig()
     {
         return [];
     }

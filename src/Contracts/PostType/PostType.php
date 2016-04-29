@@ -11,7 +11,7 @@
  * @license   https://github.com/mcaskill/thelonius/blob/master/LICENSE (MIT License)
  */
 
-namespace Thelonius\PostType;
+namespace Thelonius\Contracts\PostType;
 
 /**
  * Defines a WordPress post type model.
@@ -23,7 +23,7 @@ interface PostType
      *
      * @return array|string|PostTypeModel|PostTypeConfig
      */
-    public function getPostTypeConfig();
+    public static function getPostTypeConfig();
 
     /**
      * Retrieve the post data as a {@see wp_insert_post()} compatible array.
