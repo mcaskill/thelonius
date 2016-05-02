@@ -167,7 +167,11 @@ if ( ! function_exists('parse_post_permalink') ) {
     /**
      * Parse the permalink rewrite tags for a post.
      *
+     * @used-by Filter: 'post_link'
+     * @used-by Filter: 'post_type_link'
+     *
      * @uses   parse_post_permalink()
+     * @uses   get_post_querylink()
      *
      * @param  string        $post_link  The post's permalink.
      * @param  mixed         $post       The post in question.
@@ -178,6 +182,8 @@ if ( ! function_exists('parse_post_permalink') ) {
      */
     function parse_post_link($post_link, $post, $leavename = false, $sample = null)
     {
+        global $wp_rewrite;
+
         if ( ! $post instanceof WP_Post ) {
             $post = get_post($post);
         }
@@ -291,6 +297,51 @@ if ( ! function_exists('get_ugly_post_link') ) {
          * @param WP_Post  $post       The post in question.
          */
         return apply_filters( 'post_query_link', $post_link, $post );
+    }
+}
+
+if ( ! function_exists('get_term_parents') ) {
+    /**
+     * Retrieve term parents with separator.
+     *
+     * @link https://github.com/interconnectit/wp-permastructure
+     *
+     * @param  integer  $id         Term ID.
+     * @param  string   $taxonomy   The taxonomy the term belongs to.
+     * @param  boolean  $link       Optional. Whether to format with link. Default is FALSE.
+     * @param  string   $separator  Optional. How to separate categories. Default is '/'.
+     * @param  boolean  $nicename   Optional. Whether to use nice name for display. Default is FALSE.
+     * @param  array    $visited    Optional. Already linked to categories to prevent duplicates.
+     *
+     * @return string
+     */
+    function get_term_parents( $id, $taxonomy, $link = false, $separator = '/', $nicename = false, $visited = [] )
+    {
+        $chain = '';
+        $parent = get_term( $id, $taxonomy );
+
+        if ( is_wp_error( $parent ) ) {
+            return $parent;
+        }
+
+        if ( $nicename ) {
+            $name = $parent->slug;
+        } else {
+            $name = $parent->cat_name;
+        }
+
+        if ( $parent->parent && ( $parent->parent != $parent->term_id ) && !in_array( $parent->parent, $visited ) ) {
+            $visited[] = $parent->parent;
+            $chain .= get_term_parents( $parent->parent, $taxonomy, $link, $separator, $nicename, $visited );
+        }
+
+        if ( $link ) {
+            $chain .= '<a href="' . get_term_link( $parent->term_id, $taxonomy ) . '" title="' . esc_attr( sprintf( __( "View all posts in %s" ), $parent->name ) ) . '">'.$name.'</a>' . $separator;
+        } else {
+            $chain .= $name.$separator;
+        }
+
+        return $chain;
     }
 }
 

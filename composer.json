@@ -39,7 +39,8 @@
       "Thelonius\\": "src/"
     },
     "files": [
-      "src/helpers.php"
+      "src/helpers.php",
+      "src/events.php"
     ]
   }
 }

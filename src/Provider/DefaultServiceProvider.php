@@ -16,6 +16,8 @@ namespace Thelonius\Provider;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
 
+use Thelonius\PostType\Registry as PostTypeRegistry;
+
 /**
  * Thelonius' default Service Provider.
  */
@@ -28,5 +30,12 @@ class DefaultServiceProvider implements ServiceProviderInterface
      */
     public function register(Container $container)
     {
+        $container['post_type.registry'] = function() {
+            return new PostTypeRegistry;
+        };
+
+        $container['post_type.features'] = function() {
+            return new PostTypeRegistry;
+        };
     }
 }
