@@ -11,18 +11,18 @@
  * @license   https://github.com/mcaskill/thelonius/blob/master/LICENSE (MIT License)
  */
 
-namespace Thelonius\PostType;
+namespace Thelonius\Entity;
 
 use ArrayAccess;
 use Illuminate\Support\Arr;
-use Thelonius\Contracts\PostType\Registry as PostTypeInterface;
+use Thelonius\Contracts\Entity\Registry as RegistryInterface;
 
 /**
- * A registry of WordPress post types.
+ * A registry of WordPress objects.
  */
 class Registry implements
     ArrayAccess,
-    PostTypeInterface
+    RegistryInterface
 {
     /**
      * All of the configuration items.

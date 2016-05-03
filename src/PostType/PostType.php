@@ -17,7 +17,7 @@ use WP_Error;
 use LengthException;
 use DomainException;
 use InvalidArgumentException;
-use Thelonius\Entity;
+use Thelonius\Entity\Entity;
 use Thelonius\Contracts\Support\Stringable;
 
 /**
@@ -104,20 +104,6 @@ class PostType extends Entity implements
      * @var array
      */
     protected static $registered = [];
-
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'posts';
-
-    /**
-     * The primary key for the model.
-     *
-     * @var string
-     */
-    protected $primaryKey = 'ID';
 
     /**
      * Create a new WordPress post type model instance.

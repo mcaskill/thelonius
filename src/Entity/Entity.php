@@ -11,7 +11,7 @@
  * @license   https://github.com/mcaskill/thelonius/blob/master/LICENSE (MIT License)
  */
 
-namespace Thelonius;
+namespace Thelonius\Entity;
 
 /**
  * A Generic Model
@@ -49,16 +49,16 @@ class Entity
      */
     protected function bootIfNotBooted()
     {
-        if ( ! isset(static::$booted[self::ENTITY_TYPE][$this->name]) ) {
-            static::$booted[self::ENTITY_TYPE][$this->name] = true;
+        if ( ! isset(static::$booted[static::ENTITY_TYPE][static::class]) ) {
+            static::$booted[static::ENTITY_TYPE][static::class] = true;
 
             /** @todo Document action */
-            do_action_ref_array('thelonius/' . self::ENTITY_TYPE . '/booting', [ &$this ]);
+            do_action_ref_array('thelonius/' . static::ENTITY_TYPE . '/booting', [ &$this ]);
 
             $this->boot();
 
             /** @todo Document action */
-            do_action_ref_array('thelonius/' . self::ENTITY_TYPE . '/booted', [ &$this ]);
+            do_action_ref_array('thelonius/' . static::ENTITY_TYPE . '/booted', [ &$this ]);
         }
     }
 

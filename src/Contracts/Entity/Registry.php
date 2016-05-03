@@ -11,10 +11,10 @@
  * @license   https://github.com/mcaskill/thelonius/blob/master/LICENSE (MIT License)
  */
 
-namespace Thelonius\Contracts\PostType;
+namespace Thelonius\Contracts\Entity;
 
 /**
- * Defines a WordPress post type registry.
+ * Defines a WordPress object registry.
  */
 interface Registry
 {

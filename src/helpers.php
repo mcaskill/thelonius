@@ -163,7 +163,7 @@ if ( ! function_exists('wp_insert_post_object') ) {
     }
 }
 
-if ( ! function_exists('parse_post_permalink') ) {
+if ( ! function_exists('parse_post_link') ) {
     /**
      * Parse the permalink rewrite tags for a post.
      *
@@ -188,20 +188,25 @@ if ( ! function_exists('parse_post_permalink') ) {
             $post = get_post($post);
         }
 
-        if ( ! post_type_exists( $post->post_type ) ) {
+        $post_type = $post->post_type;
+
+        if ( ! post_type_exists( $post_type ) ) {
             throw new PostTypeNotFoundException($post);
         }
 
         $sample = ( null === $sample && isset($post->filter) && ('sample' === $post->filter) );
 
-        $post_type   = get_post_type_object( $post->post_type );
-        $permastruct = get_option( $post_type->name . '_permalink_structure' );
+        $post_type_obj = get_post_type_object( $post_type );
+        $permastruct   = get_option( "{$post_type}_permalink_structure" );
+        $has_changed   = false;
 
         // Prefer custom option over default
         if ( $permastruct && ! empty( $permastruct ) ) {
-            $post_link = $permastruct;
-        } elseif ( ! empty( $post_type->rewrite['permastruct'] ) ) {
-            $post_link = $post_type->rewrite['permastruct'];
+            $has_changed = true;
+            $post_link   = $permastruct;
+        } elseif ( ! empty( $post_type_obj->rewrite['permastruct'] ) ) {
+            $has_changed = true;
+            $post_link   = $post_type_obj->rewrite['permastruct'];
         }
 
         /** This filter is documented by {@see get_permalink()} in wp-includes/link-template.php */
@@ -214,7 +219,7 @@ if ( ! function_exists('parse_post_permalink') ) {
          * @param WP_Post  $post      The post in question.
          */
         $unpublished_statuses = apply_filters(
-            "parse_{$post->post_type}_link/unpublished_statuses",
+            "parse_{$post_type}_link/unpublished_statuses",
             get_unpublished_post_statuses(),
             $post
         );
@@ -224,6 +229,11 @@ if ( ! function_exists('parse_post_permalink') ) {
 
         if ( ! empty( $post_link ) && ( ! $is_unpublished || $sample ) ) {
             $post_link = parse_post_permalink($post_link, $post, $leavename);
+
+            if ( $has_changed ) {
+                $post_link = home_url( $post_link );
+                $post_link = user_trailingslashit( $post_link, 'single' );
+            }
         } else {
             $post_link = get_post_querylink($post);
         }
@@ -252,7 +262,7 @@ if ( ! function_exists('get_unpublished_post_statuses') ) {
     }
 }
 
-if ( ! function_exists('get_ugly_post_link') ) {
+if ( ! function_exists('get_post_querylink') ) {
     /**
      * Retrieve the "ugly" permalink for a post (query-based URL).
      *
@@ -270,11 +280,12 @@ if ( ! function_exists('get_ugly_post_link') ) {
             return $post;
         }
 
-        $post_type = get_post_type_object($post->post_type);
+        $post_type     = $post->post_type;
+        $post_type_obj = get_post_type_object($post_type);
 
         /** This filter is documented in {@see parse_post_link()} */
         $unpublished_statuses = apply_filters(
-            "parse_{$post->post_type}_link/unpublished_statuses",
+            "parse_{$post_type}_link/unpublished_statuses",
             get_unpublished_post_statuses(),
             $post
         );
@@ -282,10 +293,10 @@ if ( ! function_exists('get_ugly_post_link') ) {
         $has_post_status = isset( $post->post_status );
         $is_unpublished  = ( $has_post_status && in_array( $post->post_status, $unpublished_statuses ) );
 
-        if ( $post_type->query_var && ( $has_post_status && ! $is_unpublished ) ) {
-            $post_link = add_query_arg( $post_type->query_var, $slug, '' );
+        if ( $post_type_obj->query_var && ( $has_post_status && ! $is_unpublished ) ) {
+            $post_link = add_query_arg( $post_type_obj->query_var, $slug, '' );
         } else {
-            $post_link = add_query_arg( [ 'post_type' => $post->post_type, 'p' => $post->ID ], '' );
+            $post_link = add_query_arg( [ 'post_type' => $post_type, 'p' => $post->ID ], '' );
         }
 
         $post_link = home_url($post_link);
@@ -345,7 +356,7 @@ if ( ! function_exists('get_term_parents') ) {
     }
 }
 
-if ( ! function_exists('_parse_post_permalink') ) {
+if ( ! function_exists('parse_post_permalink') ) {
     /**
      * Parse permalink rewrite tags for a post.
      *
@@ -378,15 +389,17 @@ if ( ! function_exists('_parse_post_permalink') ) {
             throw new InvalidArgumentException('Post link empty for post ID #%s.', $post->ID);
         }
 
-        if ( ! post_type_exists( $post->post_type ) ) {
+        $post_type = $post->post_type;
+
+        if ( ! post_type_exists( $post_type ) ) {
             throw new PostTypeNotFoundException($post);
         }
 
-        $post_type = get_post_type_object( $post->post_type );
+        $post_type_obj = get_post_type_object( $post_type );
 
         $slug = $post->post_name;
 
-        if ( $post_type->hierarchical ) {
+        if ( $post_type_obj->hierarchical ) {
             $slug = get_page_uri( $post );
         }
 
@@ -406,10 +419,10 @@ if ( ! function_exists('_parse_post_permalink') ) {
          * @param WP_Post  $post       The post in question.
          * @param boolean  $leavename  Whether to keep the post name.
          */
-        $slug = apply_filters( "parse_post_permalink_for_{$post->post_type}/slug", $slug, $post, $leavename );
+        $slug = apply_filters( "parse_post_permalink_for_{$post_type}/slug", $slug, $post, $leavename );
 
         if ( ! $leavename ) {
-            $post_link = str_replace( "%{$post->post_type}%", $slug, $post_link );
+            $post_link = str_replace( "%{$post_type}%", $slug, $post_link );
         }
 
         $rewrite_tags = [
@@ -435,7 +448,7 @@ if ( ! function_exists('_parse_post_permalink') ) {
          * @param string   $post_link  A post permalink to resolve from.
          * @param WP_Post  $post       The post to resolve from.
          */
-        $rewrite_tags = apply_filters( "rewrite_tags_for_{$post->post_type}/post", $rewrite_tags, $post_link, $post );
+        $rewrite_tags = apply_filters( "rewrite_tags_for_{$post_type}/post", $rewrite_tags, $post_link, $post );
 
         $rewrite_tags = array_replace(
             $rewrite_tags,
@@ -469,15 +482,14 @@ if ( ! function_exists('_parse_post_permalink') ) {
          * @param boolean  $leavename  Whether to keep the post name.
          */
         $rewrite_tags = apply_filters(
-            "parse_post_permalink_for_{$post->post_type}/rewrite_tags",
+            "parse_post_permalink_for_{$post_type}/rewrite_tags",
             $rewrite_tags,
             $post_link,
             $post,
             $leavename
         );
 
-        $post_link = home_url( str_replace( array_keys($rewrite_tags), array_values($rewrite_tags), $post_link ) );
-        $post_link = user_trailingslashit( $post_link, 'single' );
+        $post_link = str_replace( array_keys($rewrite_tags), array_values($rewrite_tags), $post_link );
 
         return $post_link;
     }
@@ -523,6 +535,8 @@ function get_author_rewrite_tags( $author = null, $post_link = '' )
     $tags = apply_filters( 'rewrite_tags/author', $tags, $post_link );
 
     if ( $post instanceof WP_Post ) {
+        $post_type = $post->post_type;
+
         /**
          * Filter author rewrite tags for a specific post type.
          *
@@ -530,7 +544,7 @@ function get_author_rewrite_tags( $author = null, $post_link = '' )
          * @param string   $post_link  A post permalink to resolve from.
          * @param WP_Post  $post       The post to resolve from.
          */
-        $tags = apply_filters( "rewrite_tags_for_{$post->post_type}/author", $tags, $post_link, $post );
+        $tags = apply_filters( "rewrite_tags_for_{$post_type}/author", $tags, $post_link, $post );
     }
 
     return $tags;
@@ -575,6 +589,8 @@ function get_date_rewrite_tags( $time = null, $post_link = '' )
     $tags = apply_filters( 'rewrite_tags/date', $tags, $post_link );
 
     if ( $post instanceof WP_Post ) {
+        $post_type = $post->post_type;
+
         /**
          * Filter date/time rewrite tags for a specific post type.
          *
@@ -582,7 +598,7 @@ function get_date_rewrite_tags( $time = null, $post_link = '' )
          * @param string   $post_link  A post permalink to resolve from.
          * @param WP_Post  $post       The post to resolve from.
          */
-        $tags = apply_filters( "rewrite_tags_for_{$post->post_type}/date", $tags, $post_link, $post );
+        $tags = apply_filters( "rewrite_tags_for_{$post_type}/date", $tags, $post_link, $post );
     }
 
     return $tags;
@@ -644,6 +660,8 @@ function get_taxonomy_rewrite_tags( $taxonomies = null, $post_link = '' )
     $tags = apply_filters( 'rewrite_tags/taxonomy', $tags, $post_link );
 
     if ( $post instanceof WP_Post ) {
+        $post_type = $post->post_type;
+
         /**
          * Filter taxonomy rewrite tags for a specific post type.
          *
@@ -651,7 +669,7 @@ function get_taxonomy_rewrite_tags( $taxonomies = null, $post_link = '' )
          * @param string   $post_link  A post permalink to resolve from.
          * @param WP_Post  $post       The post to resolve from.
          */
-        $tags = apply_filters( "rewrite_tags_for_{$post->post_type}/taxonomy", $tags, $post_link, $post );
+        $tags = apply_filters( "rewrite_tags_for_{$post_type}/taxonomy", $tags, $post_link, $post );
     }
 
     return $tags;

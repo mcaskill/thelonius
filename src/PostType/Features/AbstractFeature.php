@@ -13,7 +13,7 @@
 
 namespace Thelonius\PostType\Features;
 
-use Thelonius\Entity;
+use Thelonius\Entity\Entity;
 use Thelonius\Contracts\PostType\Feature as FeatureInterface;
 
 /**

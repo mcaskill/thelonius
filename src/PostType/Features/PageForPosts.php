@@ -50,6 +50,8 @@ class PageForPosts extends AbstractFeature
 
     protected $settingsSection = 'page_for_posts';
 
+    protected $pagesForPosts;
+
     /**
      * Retrieve the default options for the feature.
      *
@@ -82,6 +84,16 @@ class PageForPosts extends AbstractFeature
     {
         add_filter( 'post_type_labels_page', [ $this, 'postTypeLabels'    ] );
         add_filter( 'display_post_states',   [ $this, 'displayPostStates' ], 10, 2 );
+
+        add_filter(
+            'thelonius/permastructures/rewrite_rules/post_type/permastruct',
+            [ $this, 'parsePostTypePermastruct' ],
+            10,
+            2
+        );
+
+        add_filter( 'post_link',      [ $this, 'parsePostTypePermastruct' ], 10, 2 );
+        add_filter( 'post_type_link', [ $this, 'parsePostTypePermastruct' ], 10, 2 );
     }
 
     /**
@@ -211,6 +223,57 @@ class PageForPosts extends AbstractFeature
     }
 
     /**
+     * Filter the permalink structure used for a post type permastruct.
+     *
+     * @used-by Filter: 'thelonius/permastructures/rewrite_rules/permastruct'
+     *     documented in {@see Thelonius\PostType\Features\Permastructures::addPermastructs()}
+     *
+     * @param  array   $permastruct  The post type permastruct.
+     * @param  object  $object_type  The post type object.
+     * @return array
+     *
+     * @todo Cache the rewrite tags built from the options.
+     */
+    public function parsePostTypePermastruct( $permastruct, $object_type )
+    {
+        if ( is_int( $object_type ) ) {
+            $object_type = get_post_type( $object_type );
+        } elseif ( isset( $object_type->post_type ) ) {
+            $object_type = $object_type->post_type;
+        } elseif ( isset( $object_type->name ) ) {
+            $object_type = $object_type->name;
+        }
+
+        if ( isset( $this->pagesForPosts ) ) {
+            $codes = $this->pagesForPosts;
+        } else {
+            $settings = get_option( static::OPTION_NAME, [] );
+
+            if ( 'page' === get_option( 'show_on_front' ) && $page_ID = get_option( 'page_for_posts' ) ) {
+                $settings['post'] = $page_ID;
+            }
+
+            foreach ( $settings as $post_type => $page_ID ) {
+                $codes["%page_for_{$post_type}%"] = get_page_uri( $page_ID );
+            }
+
+            $this->pagesForPosts = $codes;
+        }
+
+        if ( $codes ) {
+            $codes['%page_for_posts%'] = $codes["%page_for_{$object_type}%"];
+
+            $permastruct = str_replace(
+                array_keys( $codes ),
+                $codes,
+                $permastruct
+            );
+        }
+
+        return $permastruct;
+    }
+
+    /**
      * Retrieve the "page_for_items_field" label from the given post type.
      *
      * @param  string|object $post_type Name of the post type to retrieve from.
@@ -278,7 +341,7 @@ class PageForPosts extends AbstractFeature
                     'reading',
                     $this->settingsSection,
                     [
-                        'post_type' => $post_type->name,
+                        'post_type' => $post_type,
                         'field'     => $this->getFieldLabelFrom( $post_type ),
                         'name'      => sprintf( '%1$s[%2$s]', static::OPTION_NAME, $post_type->name ),
                         'value'     => $settings[$post_type->name]
@@ -318,13 +381,14 @@ class PageForPosts extends AbstractFeature
             throw new InvalidArgumentException( 'The field must be assigned to a post type.' );
         }
 
-        $name  = esc_attr( $args['name'] );
-        $value = esc_attr( $args['value'] );
+        $name      = esc_attr( $args['name'] );
+        $value     = esc_attr( $args['value'] );
+        $post_type = $args['post_type']->name;
 
         if ( $value ) {
             /** @todo Document the filter */
             $value = apply_filters(
-                "thelonius/page-for-posts/{$args['post_type']}/output",
+                "thelonius/page-for-posts/{$post_type}/output",
                 $value
             );
         }
@@ -334,7 +398,7 @@ class PageForPosts extends AbstractFeature
             wp_dropdown_pages( [
                 'echo'              => 0,
                 'name'              => $name,
-                'id'                => sprintf( 'page_for_%s', $args['post_type'] ),
+                'id'                => sprintf( 'page_for_%s', $post_type ),
                 'show_option_none'  => __( '&mdash; Select &mdash;' ),
                 'option_none_value' => '0',
                 'selected'          => $value
