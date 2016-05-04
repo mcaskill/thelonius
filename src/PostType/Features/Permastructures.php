@@ -74,8 +74,15 @@ class Permastructures extends AbstractFeature
      */
     public function registerActions()
     {
+        $option = static::OPTION_NAME;
+
         # add_action( 'init',        [ $this, 'protectEndpoints' ] );
         add_action( 'admin_init',  [ $this, 'registerSettings' ] );
+
+        /**
+         * Fires after the value of a specific option has been successfully updated.
+         */
+        add_action( "update_option_{$option}", 'flush_rewrite_rules' );
     }
 
     /**

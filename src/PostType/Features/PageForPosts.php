@@ -71,8 +71,17 @@ class PageForPosts extends AbstractFeature
      */
     public function registerActions()
     {
+        $option = static::OPTION_NAME;
+
         add_action( 'admin_init',  [ $this, 'registerSettings' ] );
         add_action( 'parse_query', [ $this, 'parseQuery'       ] );
+
+        /**
+         * Fires after the value of a specific option has been successfully updated.
+         */
+        add_action( "update_option_{$option}", 'flush_rewrite_rules' );
+
+        add_action( 'post_updated', [ $this, 'checkForChangedSlugs' ], 12, 3 );
     }
 
     /**
@@ -94,6 +103,35 @@ class PageForPosts extends AbstractFeature
 
         add_filter( 'post_link',      [ $this, 'parsePostTypePermastruct' ], 10, 2 );
         add_filter( 'post_type_link', [ $this, 'parsePostTypePermastruct' ], 10, 2 );
+    }
+
+    /**
+     * Fires once an existing post has been updated.
+     *
+     * @used-by Action: 'post_updated'
+     *
+     * @see wp_check_for_changed_slugs()
+     *
+     * @param int     $post_ID      Post ID.
+     * @param WP_Post $post_after   Post object following the update.
+     * @param WP_Post $post_before  Post object before the update.
+     */
+    public function checkForChangedSlugs( $post_ID, $post_after, $post_before )
+    {
+        $settings = get_option( static::OPTION_NAME, [] );
+
+        if ( ! array_search( $post_ID, $settings ) ) {
+            return;
+        }
+
+        if (
+            $post_after->post_name   === $post_before->post_name &&
+            $post_after->post_parent === $post_before->post_parent
+        ) {
+            return;
+        }
+
+        flush_rewrite_rules();
     }
 
     /**
