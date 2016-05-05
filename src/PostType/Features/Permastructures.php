@@ -209,9 +209,6 @@ class Permastructures extends AbstractFeature
         /** @todo Document the filter */
         $permastructs = apply_filters( 'thelonius/permastructures/rewrite_rules/permastructs', $permastructs );
 
-        error_log(__METHOD__);
-        error_log(var_export($permastructs,true));
-
         // add our permastructs scoped to the post types - overwriting any keys that already exist
         foreach ( $permastructs as $struct => $post_types ) {
             $postnames   = $post_types;
