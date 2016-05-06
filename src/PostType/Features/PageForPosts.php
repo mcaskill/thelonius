@@ -365,27 +365,16 @@ class PageForPosts extends AbstractFeature
                 'reading'
             );
 
-            $settings = get_option( static::OPTION_NAME, [] );
-
-            foreach ( $post_types as $post_type ) {
-                if ( ! isset( $settings[$post_type->name] ) ) {
-                    $settings[$post_type->name] = null;
-                }
-
-                add_settings_field(
-                    $post_type->name,
-                    __( 'Static pages', 'snc' ),
-                    [ $this, 'renderSettingsField' ],
-                    'reading',
-                    $this->settingsSection,
-                    [
-                        'post_type' => $post_type,
-                        'field'     => $this->getFieldLabelFrom( $post_type ),
-                        'name'      => sprintf( '%1$s[%2$s]', static::OPTION_NAME, $post_type->name ),
-                        'value'     => $settings[$post_type->name]
-                    ]
-                );
-            }
+            add_settings_field(
+                static::OPTION_NAME,
+                __( 'Pages to use as archives', 'thelonius' ),
+                [ $this, 'renderSettingsField' ],
+                'reading',
+                $this->settingsSection,
+                [
+                    'post_types' => $post_types
+                ]
+            );
         }
     }
 
@@ -413,34 +402,49 @@ class PageForPosts extends AbstractFeature
      *
      * @param array  $args  Optional. Extra arguments used when outputting the field.
      */
-    public function renderSettingsField( $args )
+    public function renderSettingsField( $args = [] )
     {
-        if ( ! isset( $args['post_type'] ) ) {
-            throw new InvalidArgumentException( 'The field must be assigned to a post type.' );
-        }
-
-        $name      = esc_attr( $args['name'] );
-        $value     = esc_attr( $args['value'] );
-        $post_type = $args['post_type']->name;
-
-        if ( $value ) {
-            /** @todo Document the filter */
-            $value = apply_filters(
-                "thelonius/page-for-posts/{$post_type}/output",
-                $value
+        if ( ! isset( $args['post_types'] ) ) {
+            throw new InvalidArgumentException(
+                'The field must be define at least one post type.'
             );
         }
 
-        printf(
-            $args['field'],
-            wp_dropdown_pages( [
-                'echo'              => 0,
-                'name'              => $name,
-                'id'                => sprintf( 'page_for_%s', $post_type ),
-                'show_option_none'  => __( '&mdash; Select &mdash;' ),
-                'option_none_value' => '0',
-                'selected'          => $value
-            ] )
-        );
+        $settings = get_option( static::OPTION_NAME, [] );
+
+        echo '<fieldset>' .
+                '<legend class="screen-reader-text"><span>' .
+                    __( 'Pages to use as archives', 'thelonius' ) .
+                '</span></legend>';
+
+        foreach ( $args['post_types'] as $post_type_obj ) {
+            $post_type = $post_type_obj->name;
+
+            $id = esc_attr( sprintf( 'page_for_%s', $post_type ) );
+
+            /** @todo Document the filter */
+            $value = apply_filters(
+                "thelonius/page-for-posts/{$post_type}/output",
+                ( isset( $settings[$post_type] ) ? $settings[$post_type] : null )
+            );
+
+            printf(
+                sprintf(
+                    '<p><label for="%1$s">%2$s</label></p>',
+                    $id,
+                    $this->getFieldLabelFrom( $post_type )
+                ),
+                wp_dropdown_pages( [
+                    'echo'              => 0,
+                    'name'              => esc_attr( sprintf( '%1$s[%2$s]', static::OPTION_NAME, $post_type ) ),
+                    'id'                => $id,
+                    'show_option_none'  => __( '&mdash; Select &mdash;' ),
+                    'option_none_value' => '0',
+                    'selected'          => esc_attr( $value )
+                ] )
+            );
+        }
+
+        echo '</fieldset>';
     }
 }
