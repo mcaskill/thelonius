@@ -163,6 +163,87 @@ if ( ! function_exists('wp_insert_post_object') ) {
     }
 }
 
+if ( ! function_exists('has_query_var') ) {
+    /**
+     * Check if the current variable is set, and is not NULL, in the WP_Query class.
+     *
+     * @global WP_Query $wp_query Global WP_Query instance.
+     *
+     * @param string    $var    The variable key to check for.
+     * @param WP_Query  $query  A WP_Query instance.
+     *
+     * @return boolean  True if the current variable is set.
+     */
+    function has_query_var( $var, WP_Query $query = null )
+    {
+        global $wp_query;
+
+        if ( ! isset( $query ) ) {
+            $query = $wp_query;
+        }
+
+        return isset( $query->query_vars[ $var ] );
+    }
+}
+
+if ( ! function_exists('get_query_vars') ) {
+    /**
+     * Retrieve variables in the WP_Query class.
+     *
+     * @param  mixed[]   $vars   A collection of variables to retrieve.
+     * @param  WP_Query  $query  A WP_Query instance.
+     *
+     * @return mixed[]
+     */
+    function get_query_vars( array $vars, WP_Query $query = null )
+    {
+        $vals = [];
+
+        if ( Arr::isAssoc( $vars ) ) {
+            foreach ( $vars as $var => $default ) {
+                if ( $query instanceof WP_Query ) {
+                    $val = $query->get( $var, $default );
+                } else {
+                    $val = get_query_var( $var, $default );
+                }
+
+                $vals[ $var ] = $val;
+            }
+        } else {
+            foreach ( $vars as $var ) {
+                if ( $query instanceof WP_Query ) {
+                    $vals[ $var ] = $query->get( $var, null );
+                } else {
+                    $vals[ $var ] = get_query_var( $var, null );
+                }
+            }
+        }
+        return $vals;
+    }
+}
+
+if ( ! function_exists('set_queried_object') ) {
+    /**
+     * Set the currently-queried object.
+     *
+     * @global WP_Query $wp_query Global WP_Query instance.
+     *
+     * @param  object    $object  Queried object.
+     * @param  WP_Query  &$query  A WP_Query instance (passed by reference).
+     */
+    function set_queried_object( $object, WP_Query &$query = null )
+    {
+        global $wp_query;
+
+        if ( ! isset( $query ) ) {
+            $query = &$wp_query;
+        }
+
+        $query->queried_object    = $object;
+        $query->queried_object_id = ( isset( $object->ID ) ? (int) $object->ID : 0 );
+    }
+}
+
 if ( ! function_exists('parse_post_link') ) {
     /**
      * Parse the permalink rewrite tags for a post.

@@ -154,33 +154,43 @@ class PageForPosts extends AbstractFeature
 
         $settings = get_option( static::OPTION_NAME, [] );
 
-        if ( '' != $qv['pagename'] && isset( $query->queried_object_id ) ) {
-            if ( $post_type = array_search( $query->queried_object_id, $settings ) ) {
-                $this->enablePostsPage( $query );
-
-                $qv['post_type'] = $post_type;
-
-                $query_vars_changed = true;
+        if ( $query->is_post_type_archive && ! empty( $qv['post_type'] ) && ! is_array( $qv['post_type'] ) ) {
+            if ( isset( $settings[ $qv['post_type'] ] ) ) {
+                set_queried_object( get_page( $settings[ $qv['post_type'] ] ), $query );
             }
-        }
+        } else {
+            if ( '' != $qv['pagename'] && isset( $query->queried_object_id ) ) {
+                if ( $post_type = array_search( $query->queried_object_id, $settings ) ) {
+                    $this->enablePostsPage( $query );
 
-        if ( $qv['page_id'] ) {
-            if ( $post_type = array_search( $qv['page_id'], $settings ) ) {
-                $this->enablePostsPage( $query );
+                    $qv['post_type'] = $post_type;
 
-                $qv['post_type'] = $post_type;
+                    set_queried_object( get_page_by_path( $qv['pagename'] ), $query );
 
-                $query_vars_changed = true;
-            }
-        }
-
-        if ( $query_vars_changed ) {
-            if ( $query->is_posts_page && ( ! isset($qv['withcomments']) || ! $qv['withcomments'] ) ) {
-                $query->is_comment_feed = false;
+                    $query_vars_changed = true;
+                }
             }
 
-            if ( ! $query->is_page && $query->is_post_type_archive ) {
-                unset( $qv['page_id'], $qv['pagename'] );
+            if ( $qv['page_id'] ) {
+                if ( $post_type = array_search( $qv['page_id'], $settings ) ) {
+                    $this->enablePostsPage( $query );
+
+                    $qv['post_type'] = $post_type;
+
+                    set_queried_object( get_page( $qv['page_id'] ), $query );
+
+                    $query_vars_changed = true;
+                }
+            }
+
+            if ( $query_vars_changed ) {
+                if ( $query->is_posts_page && ( ! isset($qv['withcomments']) || ! $qv['withcomments'] ) ) {
+                    $query->is_comment_feed = false;
+                }
+
+                if ( ! $query->is_page && $query->is_post_type_archive ) {
+                    unset( $qv['page_id'], $qv['pagename'] );
+                }
             }
         }
     }
