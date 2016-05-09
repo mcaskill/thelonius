@@ -101,8 +101,9 @@ class PageForPosts extends AbstractFeature
             2
         );
 
-        add_filter( 'post_link',      [ $this, 'parsePostTypePermastruct' ], 10, 2 );
-        add_filter( 'post_type_link', [ $this, 'parsePostTypePermastruct' ], 10, 2 );
+        add_filter( 'post_link',              [ $this, 'parsePostTypePermastruct' ], 10, 2 );
+        add_filter( 'post_type_link',         [ $this, 'parsePostTypePermastruct' ], 10, 2 );
+        add_filter( 'post_type_archive_link', [ $this, 'parsePostTypePermastruct' ], 10, 2 );
     }
 
     /**
