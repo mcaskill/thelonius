@@ -155,13 +155,22 @@ class PageForPosts extends AbstractFeature
 
         $settings = get_option( static::OPTION_NAME, [] );
 
-        if ( $query->is_post_type_archive && ! empty( $qv['post_type'] ) && ! is_array( $qv['post_type'] ) ) {
-            if ( isset( $settings[ $qv['post_type'] ] ) ) {
-                set_queried_object( get_page( $settings[ $qv['post_type'] ] ), $query );
-            }
+        if (
+            $query->is_post_type_archive &&
+            ! empty( $qv['post_type'] ) &&
+            ! is_array( $qv['post_type'] ) &&
+            isset( $settings[ $qv['post_type'] ] )
+        ) {
+            set_queried_object( get_page( $settings[ $qv['post_type'] ] ), $query );
         } else {
-            if ( '' != $qv['pagename'] && isset( $query->queried_object_id ) ) {
-                if ( $post_type = array_search( $query->queried_object_id, $settings ) ) {
+            if (
+                '' != $qv['pagename'] &&
+                isset( $query->queried_object_id ) &&
+                ( $post_type = array_search( $query->queried_object_id, $settings ) )
+            ) {
+                $post_type_obj = get_post_type_object( $post_type );
+
+                if ( $post_type_obj->has_archive ) {
                     $this->enablePostsPage( $query );
 
                     $qv['post_type'] = $post_type;
@@ -172,8 +181,13 @@ class PageForPosts extends AbstractFeature
                 }
             }
 
-            if ( $qv['page_id'] ) {
-                if ( $post_type = array_search( $qv['page_id'], $settings ) ) {
+            if (
+                $qv['page_id'] &&
+                ( $post_type = array_search( $qv['page_id'], $settings ) )
+            ) {
+                $post_type_obj = get_post_type_object( $post_type );
+
+                if ( $post_type_obj->has_archive ) {
                     $this->enablePostsPage( $query );
 
                     $qv['post_type'] = $post_type;
