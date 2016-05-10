@@ -19,8 +19,6 @@ namespace Thelonius\PostType;
  * @link https://gist.github.com/leoken/4395160
  *
  * @todo Replace proxy / noop hooks with a proper observer / subject pattern.
- * @todo Add filter to alter / extend the list of special page templates.
- * @todo Move each redirection resolver to a method executed by a filter.
  */
 trait PageRedirectionTemplates
 {
@@ -46,8 +44,8 @@ trait PageRedirectionTemplates
     public function bootPageRedirectionTemplates()
     {
         $this->pageTemplates = [
-            'redirection-child'  => __( 'Redirect to first child', 'aqcpe' ),
-            'redirection-parent' => __( 'Redirect to closest parent', 'aqcpe' )
+            'redirection-child'  => __( 'Redirect to first child' ),
+            'redirection-parent' => __( 'Redirect to closest parent' )
         ];
 
         /**
@@ -67,6 +65,9 @@ trait PageRedirectionTemplates
 
         add_filter( 'template_include',  [ &$this, 'templateInclude'  ], 1 );
         add_action( 'template_redirect', [ &$this, 'templateRedirect' ], 1 );
+
+        add_filter( 'substrate/page/template_column/value', [ &$this, 'resolvedTemplateName' ], 10, 2 );
+        add_action( 'thelonius/page-templates/resolution',  [ &$this, 'templateResolution' ], 10, 2 );
     }
 
     // Registration of Templates
@@ -136,26 +137,33 @@ trait PageRedirectionTemplates
      */
     public function registerTemplates()
     {
-        // Create the key used for the themes cache
-        $cache_key = 'page_templates-' . md5( get_theme_root() . '/' . get_stylesheet() );
-
-        // Retrieve the cache list.
-        // If it doesn't exist, or it's empty prepare an array
-        $templates = wp_get_theme()->get_page_templates();
-        if ( empty( $templates ) ) {
-            $templates = [];
-        }
-
-        // New cache, therefore remove the old one
-        wp_cache_delete( $cache_key , 'themes' );
-
         // Now add our template to the list of templates by merging our templates
         // with the existing templates array from the cache.
-        $templates = array_merge( $templates, $this->pageTemplates );
+        $this->pageTemplates = apply_filters( 'thelonius/page-templates/available', $this->pageTemplates );
 
-        // Add the modified cache to allow WordPress to pick it up for listing
-        // available templates
-        wp_cache_add( $cache_key, $templates, 'themes', 1800 );
+        if ( current_filter() ) {
+            // Create the key used for the themes cache
+            $cache_key = 'page_templates-' . md5( get_theme_root() . '/' . get_stylesheet() );
+
+            // Retrieve the cache list.
+            // If it doesn't exist, or it's empty prepare an array
+            $templates = wp_get_theme()->get_page_templates();
+            if ( empty( $templates ) ) {
+                $templates = [];
+            }
+
+            // New cache, therefore remove the old one
+            wp_cache_delete( $cache_key , 'themes' );
+
+            $templates = array_merge(
+                $templates,
+                $this->pageTemplates
+            );
+
+            // Add the modified cache to allow WordPress to pick it up for listing
+            // available templates
+            wp_cache_add( $cache_key, $templates, 'themes', 1800 );
+        }
     }
 
 
@@ -203,28 +211,63 @@ trait PageRedirectionTemplates
             $post->template = get_post_meta( $post->ID, '_wp_page_template', true );
 
             if ( isset( $this->pageTemplates[ $post->template ] ) ) {
-                if ( 'redirection-child' === $post->template ) {
-                    $destination = get_children( [
-                        'numberposts' => 1,
-                        'post_parent' => $post->ID,
-                        'post_type'   => 'page',
-                        'post_status' => 'publish',
-                        'orderby'     => 'menu_order',
-                        'order'       => 'ASC'
-                    ] );
-                }
-
-                if ( 'redirection-parent' === $post->template && $post->post_parent > 0 ) {
-                    $destination = get_post( $post->post_parent );
-                }
-
-                if (
-                    1 == count( $destination ) &&
-                    wp_redirect( get_permalink( current( $destination )->ID ), 303 )
-                ) {
-                    exit;
-                }
+                do_action( 'thelonius/page-templates/resolution', $post->template, $post );
             }
         }
+    }
+
+    /**
+     * Fires before determining which template to load,
+     * executing any custom template redirections.
+     *
+     * @used-by Action: 'thelonius/page-templates/resolution'
+     *
+     * @param  string   $template  The special page template.
+     * @param  WP_Post  $post      The page associated to the template.
+     * @return void
+     */
+    public function templateResolution( $template, $post )
+    {
+        if ( 'redirection-child' === $template ) {
+            $destination = get_children( [
+                'numberposts' => 1,
+                'post_parent' => $post->ID,
+                'post_type'   => 'page',
+                'post_status' => 'publish',
+                'orderby'     => 'menu_order title',
+                'order'       => 'ASC'
+            ] );
+        }
+
+        if ( 'redirection-parent' === $template && $post->post_parent > 0 ) {
+            $destination = get_post( $post->post_parent );
+        }
+
+        if (
+            1 === count( $destination ) &&
+            wp_redirect( get_permalink( reset( $destination )->ID ), 303 )
+        ) {
+            exit;
+        }
+    }
+
+    /**
+     * Fires before determining which template to load,
+     * executing any custom template redirections.
+     *
+     * @used-by Filter: 'substrate/page/template_column/value'
+     *
+     * @param  string   $output    The value of the cell to display.
+     * @param  string   $template  The current post's assigned page template.
+     * @param  integer  $post_id   The current post ID.
+     * @return string
+     */
+    public function resolvedTemplateName( $output, $template )
+    {
+        if ( isset( $this->pageTemplates[ $template ] ) ) {
+            return $this->pageTemplates[ $template ];
+        }
+
+        return $output;
     }
 }
