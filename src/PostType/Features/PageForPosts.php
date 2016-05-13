@@ -163,21 +163,36 @@ class PageForPosts extends AbstractFeature
         ) {
             set_queried_object( get_page( $settings[ $qv['post_type'] ] ), $query );
         } else {
-            if (
-                '' != $qv['pagename'] &&
-                isset( $query->queried_object_id ) &&
-                ( $post_type = array_search( $query->queried_object_id, $settings ) )
-            ) {
-                $post_type_obj = get_post_type_object( $post_type );
+            if ( '' != $qv['pagename'] ) {
+                if (
+                    isset( $query->queried_object_id ) &&
+                    ( $post_type = array_search( $query->queried_object_id, $settings ) )
+                ) {
+                    $post_type_obj = get_post_type_object( $post_type );
 
-                if ( $post_type_obj->has_archive ) {
-                    $this->enablePostsPage( $query );
+                    if ( $post_type_obj->has_archive ) {
+                        $this->enablePostsPage( $query );
 
-                    $qv['post_type'] = $post_type;
+                        $qv['post_type'] = $post_type;
 
-                    set_queried_object( get_page_by_path( $qv['pagename'] ), $query );
+                        set_queried_object( get_page_by_path( $qv['pagename'] ), $query );
 
-                    $query_vars_changed = true;
+                        $query_vars_changed = true;
+                    }
+                } elseif ( isset( $settings[ $qv['post_type'] ] ) ) {
+
+                    $page_uri = get_page_uri( $settings[ $qv['post_type'] ] );
+                    $page_uri = rtrim( $page_uri, '/' ) . '/' . $qv['pagename'];
+                    $reqpage  = get_page_by_path( $page_uri );
+
+                    if ( ! empty( $reqpage ) ) {
+                        $query->is_single = false;
+                        $query->is_page   = true;
+
+                        set_queried_object( $reqpage, $query );
+
+                        $qv['post_type'] = 'page';
+                    }
                 }
             }
 
