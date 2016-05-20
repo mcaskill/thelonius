@@ -65,6 +65,25 @@ class PageForPosts extends AbstractFeature
     }
 
     /**
+     * Retrieve the page IDs for posts.
+     *
+     * @return void
+     */
+    public static function pagesForPosts()
+    {
+        $pages = get_option( static::OPTION_NAME, [] );
+
+        if (
+            'page' === get_option('show_on_front') &&
+            ( $page_ID = get_option('page_for_posts') )
+        ) {
+            $pages['post'] = $page_ID;
+        }
+
+        return array_map( 'intval', $pages );
+    }
+
+    /**
      * Register actions related to the post type.
      *
      * @return void
@@ -325,13 +344,9 @@ class PageForPosts extends AbstractFeature
         if ( isset( $this->pagesForPosts ) ) {
             $codes = $this->pagesForPosts;
         } else {
-            $settings = get_option( static::OPTION_NAME, [] );
+            $pages = static::pagesForPosts();
 
-            if ( 'page' === get_option( 'show_on_front' ) && $page_ID = get_option( 'page_for_posts' ) ) {
-                $settings['post'] = $page_ID;
-            }
-
-            foreach ( $settings as $post_type => $page_ID ) {
+            foreach ( $pages as $post_type => $page_ID ) {
                 $codes["%page_for_{$post_type}%"] = get_page_uri( $page_ID );
             }
 
