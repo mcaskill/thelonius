@@ -138,9 +138,9 @@ class PageForPosts extends AbstractFeature
      */
     public function checkForChangedSlugs( $post_ID, $post_after, $post_before )
     {
-        $settings = get_option( static::OPTION_NAME, [] );
+        $archives = get_option( static::OPTION_NAME, [] );
 
-        if ( ! array_search( $post_ID, $settings ) ) {
+        if ( ! array_search( $post_ID, $archives ) ) {
             return;
         }
 
@@ -172,20 +172,26 @@ class PageForPosts extends AbstractFeature
 
         $qv = &$query->query_vars;
 
-        $settings = get_option( static::OPTION_NAME, [] );
+        $archives = static::pagesForPosts();
 
         if (
-            $query->is_post_type_archive &&
-            ! empty( $qv['post_type'] ) &&
-            ! is_array( $qv['post_type'] ) &&
-            isset( $settings[ $qv['post_type'] ] )
+            (
+                $query->is_date() ||
+                $query->is_post_type_archive()
+            ) &&
+            (
+                ! empty( $qv['post_type'] ) &&
+                ! is_array( $qv['post_type'] ) &&
+                isset( $archives[ $qv['post_type'] ] )
+            )
         ) {
-            set_queried_object( get_page( $settings[ $qv['post_type'] ] ), $query );
+            $page = get_page( $archives[ $qv['post_type'] ] );
+            set_queried_object( $page, $query );
         } else {
             if ( '' != $qv['pagename'] ) {
                 if (
                     isset( $query->queried_object_id ) &&
-                    ( $post_type = array_search( $query->queried_object_id, $settings ) )
+                    ( $post_type = array_search( $query->queried_object_id, $archives ) )
                 ) {
                     $post_type_obj = get_post_type_object( $post_type );
 
@@ -194,13 +200,14 @@ class PageForPosts extends AbstractFeature
 
                         $qv['post_type'] = $post_type;
 
-                        set_queried_object( get_page_by_path( $qv['pagename'] ), $query );
+                        $page = get_page_by_path( $qv['pagename'] );
+                        set_queried_object( $page, $query );
 
                         $query_vars_changed = true;
                     }
-                } elseif ( isset( $settings[ $qv['post_type'] ] ) ) {
+                } elseif ( isset( $archives[ $qv['post_type'] ] ) ) {
 
-                    $page_uri = get_page_uri( $settings[ $qv['post_type'] ] );
+                    $page_uri = get_page_uri( $archives[ $qv['post_type'] ] );
                     $page_uri = rtrim( $page_uri, '/' ) . '/' . $qv['pagename'];
                     $reqpage  = get_page_by_path( $page_uri );
 
@@ -217,7 +224,7 @@ class PageForPosts extends AbstractFeature
 
             if (
                 $qv['page_id'] &&
-                ( $post_type = array_search( $qv['page_id'], $settings ) )
+                ( $post_type = array_search( $qv['page_id'], $archives ) )
             ) {
                 $post_type_obj = get_post_type_object( $post_type );
 
@@ -226,7 +233,8 @@ class PageForPosts extends AbstractFeature
 
                     $qv['post_type'] = $post_type;
 
-                    set_queried_object( get_page( $qv['page_id'] ), $query );
+                    $page = get_page( $qv['page_id'] );
+                    set_queried_object( $page, $query );
 
                     $query_vars_changed = true;
                 }
@@ -307,9 +315,9 @@ class PageForPosts extends AbstractFeature
      */
     public function displayPostStates( $post_states, $post )
     {
-        $settings = get_option( static::OPTION_NAME, [] );
+        $archives = get_option( static::OPTION_NAME, [] );
 
-        if ( $post_type = array_search( $post->ID, $settings ) ) {
+        if ( $post_type = array_search( $post->ID, $archives ) ) {
             $post_type_obj  = get_post_type_object( $post_type );
             $page_for_posts = sprintf( 'page_for_%s', $post_type );
 
@@ -465,7 +473,7 @@ class PageForPosts extends AbstractFeature
             );
         }
 
-        $settings = get_option( static::OPTION_NAME, [] );
+        $archives = get_option( static::OPTION_NAME, [] );
 
         echo '<fieldset>' .
                 '<legend class="screen-reader-text"><span>' .
@@ -480,7 +488,7 @@ class PageForPosts extends AbstractFeature
             /** @todo Document the filter */
             $value = apply_filters(
                 "thelonius/page-for-posts/{$post_type}/output",
-                ( isset( $settings[$post_type] ) ? $settings[$post_type] : null )
+                ( isset( $archives[$post_type] ) ? $archives[$post_type] : null )
             );
 
             printf(
