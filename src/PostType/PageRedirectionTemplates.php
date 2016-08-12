@@ -208,10 +208,12 @@ trait PageRedirectionTemplates
         if ( ! is_admin() && is_page() ) {
             global $post;
 
-            $post->template = get_post_meta( $post->ID, '_wp_page_template', true );
+            if (isset($post->ID)) {
+                $post->template = get_post_meta( $post->ID, '_wp_page_template', true );
 
-            if ( isset( $this->pageTemplates[ $post->template ] ) ) {
-                do_action( 'thelonius/page-templates/resolution', $post->template, $post );
+                if ( isset( $this->pageTemplates[ $post->template ] ) ) {
+                    do_action( 'thelonius/page-templates/resolution', $post->template, $post );
+                }
             }
         }
     }
