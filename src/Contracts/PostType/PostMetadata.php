@@ -11,20 +11,17 @@
  * @license   https://github.com/mcaskill/thelonius/blob/master/LICENSE (MIT License)
  */
 
-namespace Thelonius\Container;
-
-use Interop\Container\ContainerInterface;
+namespace Thelonius\Contracts\PostType;
 
 /**
- * Defines an object with dependencies from a DI container.
+ * Defines a model that can use WordPress post metadata.
  */
-interface DependentInterface
+interface PostMetadata
 {
     /**
-     * Inject dependencies from a DI Container.
+     * Retrieve all the post metadata as an associative array.
      *
-     * @param  ContainerInterface  $container  A dependencies container instance.
-     * @return self
+     * @return array
      */
-    public function setDependencies(ContainerInterface $container);
+    public function getPostMeta();
 }

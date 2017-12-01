@@ -14,6 +14,7 @@
     "issues": "https://github.com/mcaskill/thelonius/issues",
     "docs": "https://github.com/mcaskill/thelonius/wiki"
   },
+  "minimum-stability": "dev",
   "repositories": [
     {
       "type": "composer",
@@ -24,7 +25,7 @@
     "php": ">=5.5",
     "container-interop/container-interop": "^1.0",
     "hassankhan/config": "^0.10",
-    "illuminate/support": "^5.2",
+    "illuminate/support": "^5.4",
     "pimple/pimple": "^3.0",
     "vlucas/phpdotenv": "^2.1"
   },
@@ -36,9 +37,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Thelonius\\": "src/",
-      "WordPress\\": "",
-      "WP\\": ""
+      "Thelonius\\": "src/"
     },
     "files": [
       "src/helpers.php"
