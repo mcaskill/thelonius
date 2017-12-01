@@ -205,7 +205,7 @@ class PageForPosts extends AbstractFeature
 
                         $query_vars_changed = true;
                     }
-                } elseif ( isset( $archives[ $qv['post_type'] ] ) ) {
+                } elseif ( isset( $qv['post_type'] ) && isset( $archives[ $qv['post_type'] ] ) ) {
 
                     $page_uri = get_page_uri( $archives[ $qv['post_type'] ] );
                     $page_uri = rtrim( $page_uri, '/' ) . '/' . $qv['pagename'];
@@ -361,7 +361,7 @@ class PageForPosts extends AbstractFeature
             $this->pagesForPosts = $codes;
         }
 
-        if ( $codes ) {
+        if ( $codes && isset( $codes["%page_for_{$object_type}%"] ) ) {
             $codes['%page_for_posts%'] = $codes["%page_for_{$object_type}%"];
 
             $permastruct = str_replace(
